@@ -64,6 +64,7 @@ contract RedBlockTreeKV {
         if (needsCopy) {
             /// @solidity memory-safe-assembly
             assembly {
+                /// @dev 6 = _SLOTS_PER_POSITION
                 for { let i := 0 } lt(i, 6) { i := add(i, 1) } { sstore(add(deletedSlot, i), sload(add(lastSlot, i))) }
             }
         }
