@@ -2,15 +2,15 @@
 pragma solidity ^0.8.30;
 
 import {Test, console} from "forge-std/Test.sol";
-import {RedBlockTreeKV} from "../src/RedBlockTreeKV.sol";
+import {RedBlackTreeKV} from "../src/RedBlackTreeKV.sol";
 import {ValueLib} from "../src/lib/Value.sol";
 import {RedBlackTreeLib} from "../src/lib/RedBlackTreeLib.sol";
 
-contract RedBlockTreeKVTest is Test {
-    RedBlockTreeKV public redBlockTreeKV;
+contract RedBlackTreeKVTest is Test {
+    RedBlackTreeKV public redBlockTreeKV;
 
     function setUp() public {
-        redBlockTreeKV = new RedBlockTreeKV();
+        redBlockTreeKV = new RedBlackTreeKV();
     }
 
     function generateValue(uint256 value) internal pure returns (ValueLib.Value memory) {

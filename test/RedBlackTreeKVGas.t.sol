@@ -2,17 +2,17 @@
 pragma solidity ^0.8.30;
 
 import {Test, console} from "forge-std/Test.sol";
-import {RedBlockTreeKV} from "../src/RedBlockTreeKV.sol";
+import {RedBlackTreeKV} from "../src/RedBlackTreeKV.sol";
 import {MappingKV} from "../src/MappingKV.sol";
 import {ValueLib} from "../src/lib/Value.sol";
 
 contract MappingGasTest is Test {
     uint256 private constant _INSERT_COUNT = 1000;
-    RedBlockTreeKV public redBlockTreeKV;
+    RedBlackTreeKV public redBlockTreeKV;
     MappingKV public mappingKV;
 
     function setUp() public {
-        redBlockTreeKV = new RedBlockTreeKV();
+        redBlockTreeKV = new RedBlackTreeKV();
         mappingKV = new MappingKV();
     }
 

@@ -4,7 +4,7 @@ A demonstration of a gas-efficient key-value store implementation using Red-Blac
 
 ## Overview
 
-This project implements a Red-Black Tree based key-value store (`RedBlockTreeKV`) that stores complex value structures efficiently. The implementation is particularly beneficial for use cases involving frequent insertions and deletions, as it reuses storage slots and minimizes gas consumption.
+This project implements a Red-Black Tree based key-value store (`RedBlackTreeKV`) that stores complex value structures efficiently. The implementation is particularly beneficial for use cases involving frequent insertions and deletions, as it reuses storage slots and minimizes gas consumption.
 
 The Red-Black Tree implementation is based on [Solady's RedBlackTreeLib](https://github.com/vectorized/solady/blob/main/src/utils/RedBlackTreeLib.sol). In this example, we modified the `remove` function to prevent deleting storage when removing nodes, enabling storage slot reuse for subsequent insertions.
 
@@ -38,15 +38,15 @@ The Red-Black Tree implementation shows **90% gas reduction** for hot insertions
 
 ```
 src/
-├── RedBlockTreeKV.sol      # Main KV store implementation
+├── RedBlackTreeKV.sol      # Main KV store implementation
 ├── MappingKV.sol          # Traditional mapping implementation for comparison
 └── lib/
     ├── RedBlackTreeLib.sol # Red-Black Tree data structure library
     └── Value.sol          # Value struct definition
 
 test/
-├── RedBlockTreeKV.t.sol     # Comprehensive unit tests
-└── RedBlockTreeKVGas.t.sol  # Gas benchmark tests
+├── RedBlackTreeKV.t.sol     # Comprehensive unit tests
+└── RedBlackTreeKVGas.t.sol  # Gas benchmark tests
 ```
 
 ## Value Structure
@@ -70,7 +70,7 @@ struct Value {
 ### Basic Operations
 
 ```solidity
-RedBlockTreeKV kv = new RedBlockTreeKV();
+RedBlackTreeKV kv = new RedBlackTreeKV();
 
 // Create a value
 ValueLib.Value memory value = ValueLib.Value({
@@ -116,7 +116,7 @@ forge build
 forge test
 
 # Run unit tests only
-forge test --match-contract RedBlockTreeKVTest
+forge test --match-contract RedBlackTreeKVTest
 
 # Run gas benchmarks
 forge test --match-contract MappingGasTest -vv
