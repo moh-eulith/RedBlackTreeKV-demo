@@ -5,7 +5,7 @@ import {RedBlackTreeLib} from "./lib/RedBlackTreeLib.sol";
 import {ValueLib} from "./lib/Value.sol";
 
 // A simple RBT kv example. It is gas-efficient if frequently add & remove.
-contract RedBlockTreeKV {
+contract RedBlackTreeKV {
     uint256 private constant _DATA_SLOT_SEED = 0xdeadbeef; // Arbitrary unique seed
     uint256 private constant _SLOTS_PER_POSITION = ValueLib.SLOTS_PER_POSITION; // Dense slots per value
 
