@@ -8,7 +8,7 @@
 - There are two types of "hot" inserts: 
   - inserts done in the same transaction after removing a value
   - inserts done in different transactions, where the new insert follows an old delete
-- It's basically using an emtpy tree. Tree size matters because it's an `O(log n)` structure, not a O(1) like solidity mappings
+- It's basically using an emtpy tree. Tree size matters because it's an `O(log n)` structure, not a `O(1)` like solidity mappings
   - the size of the tree represents natural growth in data structures. Some examples:
     - ERC20's ledger grows with the number of people who have that token
     - Uniswap's books grow with the number of LPs.
@@ -21,6 +21,13 @@ To address these issues:
 - We'll consider hot inserts in different transactions. It's unclear under what conditions a contract would benefit from removing key A, adding key B in the same exact transaction.
 - We'll do tests for various tree sizes
 - We'll add tests for reads as well as writes
+- The most common operation on all EVM chains is an ERC20 transfer: take some amount from one account and add it to another.
+  - In terms of the ledger, this is just:
+```
+balance[src] = balance[src] - amount;
+balance[dest] = balance[dest] + amount;
+```
+  - So that's two reads and two updates in the same data structure. We add a test for that.
 
 The code for the above can be seen in `RedBlackTreeKV1Gas.t.sol`
 
@@ -30,16 +37,20 @@ Under normal EVM gas costs (as measured here and in the original code):
 - Hot inserts start at around 2.5x as expensive, then grow to 4x if the tree has 2000 elements or more.
 - Deletes are very expensive (10x or more) in a tree and get worse with size.
 - Reads are generally very expensive. They start at 6x the cost, then get progressively worse with size. By the time there are 2000 entries in the tree, reads are 25x as expensive.
+- Transfers start at 6x more expensive and get to 17x more expensive with 2000 or more elements.
 
 This is summarized in the table below (percents in parentheses are with respect to solidity mapping)
 
-| Data Structure / Entries | Cold Insert        | Hot Insert          | Delete             | Read               |
-|--------------------------|--------------------|---------------------|--------------------|--------------------|
-| Solidity Mapping Cost    | 22000 (100%)       | 22000 (100%)        | 1600 (100%)        | 2500 (100%)        |
-| Tree Cost (empty)        | 95646 (434%)       | 58646 (266%)        | --                 | --                 |
-| Tree Cost (one entry)    | 103780 (472%)      | 58646 (266%)        | 18079 (1130%)      | 14275 (571%)       |
-| Tree Cost (2048 entries) | 138075 (628%)      | 83975 (382%)        | 104729 (6545%)     | 61982 (2479%)      |
+| Data Structure / Entries    | Cold Insert        | Hot Insert          | Delete             | Read               | Transfer         |
+|-----------------------------|--------------------|---------------------|--------------------|--------------------|------------------|
+| Solidity Mapping Cost       | 22000 (100%)       | 22000 (100%)        | 1600 (100%)        | 2500 (100%)        | 10355 (100%)     |
+| Tree Cost (empty)           | 95646 (434%)       | 58646 (266%)        | --                 | --                 | --               |
+| Tree Cost (one/two entries) | 103780 (472%)      | 58646 (266%)        | 18079 (1130%)      | 14275 (571%)       | 67793 (655%)     |
+| Tree Cost (2048 entries)    | 138075 (628%)      | 83975 (382%)        | 104729 (6545%)     | 61982 (2479%)      | 172164 (1663%)   |
 
+Note: manipulating a tree is not a constant time operation. Depending on where the key is located in the tree that is being inserted/deleted/read,
+the time will vary. It will never be less than the value for an empty (or tiny) tree. In this particular tree, the average time is half the maximum.
+Test values were picked randomly (they could be closer to worse case).
 
 # Discussion
 So are trees just evil data structures? No, absolutely not. If you need a tree, especially the sorted variety, a red-black tree is great.
@@ -47,6 +58,7 @@ On the other hand, if all you need is a map, there is no escaping the fact that:
 
 - Trees are `O(log n)`. The more users you have, **the more expensive all operations become for all users**.
 - Computing gas cost becomes more difficult: going from constant values to values that depend on data completely external to the transaction is just harder.
+- Using a sorted tree with hashed (therefore, randomized) keys is the worst of both worlds: slow `O(log n)` operations, with no benefit from sorting.
 
 The other part of the discussion here is tree size. In many apps, that corresponds to the number of users.
 If you have an app that will never have 2000 or more users and you do a lot of inserts and deletes, tree may be a win.
@@ -61,6 +73,8 @@ what would happen, actual results may be different:
 - Hot inserts are hard to reason about. The code must be executed against a live testnet.
 - Deletes will still be very expensive in a tree 
 - Reads remain expensive: they get progressively worse with size. By the time there are 2000 entries, reads are 25x as expensive.
+- Transfers are a very interesting case, because in theory they don't need a 2M gas operation, so they remain exactly the same: 6-17x more expensive.
+  - Essentially, by trying to optimize for the expensive 2M gas store, updates have become far more expensive.
 
 ## Why are reads important?
 Reads happen all the time when a smart contract needs to do its work. Imagine a simple swap transaction. We need to minimally read:

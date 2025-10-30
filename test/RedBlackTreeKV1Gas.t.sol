@@ -59,6 +59,22 @@ contract MappingGasTest is Test {
             beforeTestCalldata[0] = abi.encodePacked(this.insertOneInTree.selector);
             beforeTestCalldata[1] = abi.encodePacked(this.insert2048InTree.selector);
         }
+        if (testSelector == this.test_rbt_transfer_one.selector) {
+            beforeTestCalldata = new bytes[](2);
+            beforeTestCalldata[0] = abi.encodeWithSignature("insertOneInTreeKey(uint256)", 999);
+            beforeTestCalldata[1] = abi.encodeWithSignature("insertOneInTreeKey(uint256)", 1000);
+        }
+        if (testSelector == this.test_rbt_transfer_2048.selector) {
+            beforeTestCalldata = new bytes[](3);
+            beforeTestCalldata[0] = abi.encodePacked(this.insert2048InTree.selector);
+            beforeTestCalldata[1] = abi.encodeWithSignature("insertOneInTreeKey(uint256)", 999);
+            beforeTestCalldata[2] = abi.encodeWithSignature("insertOneInTreeKey(uint256)", 1000);
+        }
+        if (testSelector == this.test_mapping_transfer.selector) {
+            beforeTestCalldata = new bytes[](2);
+            beforeTestCalldata[0] = abi.encodeWithSignature("insertOneInMappingKey(uint256)", 999);
+            beforeTestCalldata[1] = abi.encodeWithSignature("insertOneInMappingKey(uint256)", 1000);
+        }
     }
 
     function insert2048InTree() public {
@@ -80,11 +96,20 @@ contract MappingGasTest is Test {
         uint256 orderId1 = uint256(keccak256(abi.encodePacked("valueOne", key)));
 
         uint256 gasBefore = gasleft();
-        redBlackTreeKV.setValue(orderId1, 1);
+        redBlackTreeKV.setValue(orderId1, 100);
         uint256 gasAfter = gasleft();
         console.log("gas used one insert", gasBefore - gasAfter);
     }
-    
+
+    function insertOneInMappingKey(uint256 key) public {
+        uint256 orderId1 = uint256(keccak256(abi.encodePacked("valueOne", key)));
+
+        uint256 gasBefore = gasleft();
+        mappingKV[orderId1] = 100;
+        uint256 gasAfter = gasleft();
+        console.log("gas used one insert", gasBefore - gasAfter);
+    }
+
     function deleteOneInTreeKey(uint256 key) public {
         uint256 orderId1 = uint256(keccak256(abi.encodePacked("valueOne", key)));
         uint256 gasBefore = gasleft();
@@ -99,6 +124,32 @@ contract MappingGasTest is Test {
         redBlackTreeKV.getValue(orderId1);
         uint256 gasAfter = gasleft();
         console.log("gas used one read", gasBefore - gasAfter);
+    }
+    
+    function transferInTreeKey(uint256 key) public {
+        uint256 orderId1 = uint256(keccak256(abi.encodePacked("valueOne", key)));
+        uint256 orderId2 = uint256(keccak256(abi.encodePacked("valueOne", key+1)));
+
+        uint256 gasBefore = gasleft();
+        uint256 v1 = redBlackTreeKV.getValue(orderId1);
+        uint256 v2 = redBlackTreeKV.getValue(orderId2);
+        redBlackTreeKV.deleteValue(orderId1);
+        redBlackTreeKV.setValue(orderId1, v1 - 1);
+        redBlackTreeKV.deleteValue(orderId2);
+        redBlackTreeKV.setValue(orderId2, v2 + 1);
+        uint256 gasAfter = gasleft();
+        console.log("gas used one transfer", gasBefore - gasAfter);
+    }
+
+    function transferInMappingKey(uint256 key) public {
+        uint256 orderId1 = uint256(keccak256(abi.encodePacked("valueOne", key)));
+        uint256 orderId2 = uint256(keccak256(abi.encodePacked("valueOne", key+1)));
+
+        uint256 gasBefore = gasleft();
+        mappingKV[orderId1] -= 1;
+        mappingKV[orderId2] += 1;
+        uint256 gasAfter = gasleft();
+        console.log("gas used one transfer", gasBefore - gasAfter);
     }
 
     function test_rbt_cold_insert_empty() public {
@@ -139,6 +190,18 @@ contract MappingGasTest is Test {
 
     function test_rbt_read_2048() public {
         readOneInTreeKey(KEY_ONE);
+    }
+
+    function test_rbt_transfer_one() public {
+        transferInTreeKey(999);
+    }
+
+    function test_rbt_transfer_2048() public {
+        transferInTreeKey(999);
+    }
+
+    function test_mapping_transfer() public {
+        transferInMappingKey(999);
     }
 
     function generateValue(uint256 value) internal pure returns (uint256) {
